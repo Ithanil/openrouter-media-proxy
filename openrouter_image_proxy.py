@@ -13,6 +13,7 @@ import json
 import time
 import uuid
 import re
+import base64
 import logging
 import asyncio
 
@@ -41,7 +42,7 @@ logger = logging.getLogger("image_proxy")
 
 # ---- Constants / mappings --------------------------------------------------
 
-# OpenAI pixel dimensions -> OpenRouter aspect ratios [2][4]
+# OpenAI pixel dimensions -> OpenRouter aspect ratios
 SIZE_TO_ASPECT: dict[str, str] = {
     "1024x1024": "1:1",
     "1536x1024": "3:2",
@@ -52,7 +53,7 @@ SIZE_TO_ASPECT: dict[str, str] = {
     "512x512":   "1:1",
 }
 
-# OpenAI quality labels -> OpenRouter image_size tokens [2][4]
+# OpenAI quality labels -> OpenRouter image_size tokens
 QUALITY_TO_IMAGE_SIZE: dict[str, str] = {
     "low":      "1K",
     "standard": "1K",
@@ -98,8 +99,8 @@ def upstream_headers(request: Request) -> dict:
 
 def extract_images(data: dict) -> list[dict]:
     """
-    Pull base64 images out of an OpenRouter chat/completions response [4]
-    and reshape them into OpenAI ImagesResponse.data entries [2].
+    Pull base64 images out of an OpenRouter chat/completions response
+    and reshape them into OpenAI ImagesResponse.data entries.
     """
     images: list[dict] = []
     for choice in data.get("choices", []):
@@ -261,13 +262,13 @@ async def edits(request: Request):
         background = str(form.get("background") or "") or None
 
         image_urls: list[str] = []
-        for field_name in ("image", "mask"):
-            upload = form.get(field_name)
-            if upload and hasattr(upload, "read"):
-                raw = await upload.read()
-                ct = getattr(upload, "content_type", None) or "image/png"
-                b64 = base64.b64encode(raw).decode()
-                image_urls.append(f"data:{ct};base64,{b64}")
+        for key, value in form.multi_items():
+            if hasattr(value, "read"):
+                raw = await value.read()
+                if raw:
+                    ct = getattr(value, "content_type", None) or "image/png"
+                    b64 = base64.b64encode(raw).decode()
+                    image_urls.append(f"data:{ct};base64,{b64}")
     else:
         body = await request.json()
         prompt = body.get("prompt", "")
@@ -288,12 +289,13 @@ async def edits(request: Request):
             if mask_url:
                 image_urls.append(mask_url)
 
-    # Build multimodal content parts for OpenRouter [4]
-    content_parts: list[dict] = [
-        {"type": "image_url", "image_url": {"url": u}} for u in image_urls
-    ]
+    # Build multimodal content parts for OpenRouter
+    # OpenRouter recommends text first, then images.
     prompt_text = _augment_prompt(prompt, background=background)
-    content_parts.append({"type": "text", "text": prompt_text})
+    content_parts: list[dict] = [{"type": "text", "text": prompt_text}]
+    content_parts.extend(
+        {"type": "image_url", "image_url": {"url": u}} for u in image_urls
+    )
 
     image_config = build_image_config(size, quality)
 
@@ -333,4 +335,3 @@ async def edits(request: Request):
 
     logger.info("rid=%s endpoint=edits images_returned=%s", rid, len(all_images))
     return JSONResponse(content={"created": int(time.time()), "data": all_images})
-
