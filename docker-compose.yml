@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  openrouter-image-proxy:
+  openrouter-media-proxy:
     image: python:3.14-slim
     restart: unless-stopped
     working_dir: /app
@@ -13,9 +13,9 @@ services:
       - LOG_LEVEL=INFO
     command: >
       bash -c 'pip install --no-cache-dir -r requirements.txt &&
-      uvicorn openrouter_image_proxy:app --host 0.0.0.0 --port 8080'
+      uvicorn openrouter_media_proxy:app --host 0.0.0.0 --port 8080'
     volumes:
-      - ./openrouter_image_proxy.py:/app/openrouter_image_proxy.py:ro
+      - ./openrouter_media_proxy.py:/app/openrouter_media_proxy.py:ro
       - ./requirements.txt:/app/requirements.txt:ro
     networks:
       - my_network

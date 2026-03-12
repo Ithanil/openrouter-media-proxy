@@ -5,12 +5,12 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-import openrouter_image_proxy
+import openrouter_media_proxy
 
 
 class ProxyAudioTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = TestClient(openrouter_image_proxy.app)
+        self.client = TestClient(openrouter_media_proxy.app)
 
     def tearDown(self) -> None:
         self.client.close()
@@ -37,7 +37,7 @@ class ProxyAudioTests(unittest.TestCase):
                 None,
             )
 
-        with patch.object(openrouter_image_proxy, "_call_upstream", new=fake_call_upstream):
+        with patch.object(openrouter_media_proxy, "_call_upstream", new=fake_call_upstream):
             response = self.client.post(
                 "/v1/audio/transcriptions",
                 headers={"Authorization": "Bearer test-key"},
@@ -116,7 +116,7 @@ class ProxyAudioTests(unittest.TestCase):
                 None,
             )
 
-        with patch.object(openrouter_image_proxy, "_call_upstream", new=fake_call_upstream):
+        with patch.object(openrouter_media_proxy, "_call_upstream", new=fake_call_upstream):
             response = self.client.post(
                 "/v1/audio/translations",
                 data={
@@ -164,7 +164,7 @@ class ProxyAudioTests(unittest.TestCase):
             return b"\x00\x01\x02", "Hello there", None
 
         with patch.object(
-            openrouter_image_proxy,
+            openrouter_media_proxy,
             "_collect_speech_audio",
             new=fake_collect_speech_audio,
         ):

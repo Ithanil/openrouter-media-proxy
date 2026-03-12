@@ -1,4 +1,4 @@
-# OpenRouter Image + Audio Proxy
+# OpenRouter Media Proxy
 
 A minimal, transparent FastAPI proxy that lets **Open WebUI** or any other
 client expecting parts of the **OpenAI Images API** and **OpenAI Audio API**
@@ -104,13 +104,13 @@ Bare `/images/*` and `/audio/*` routes are also available for convenience.
 1. Start the service:
 
    ```bash
-   docker compose up -d openrouter-image-proxy
+   docker compose up -d openrouter-media-proxy
    ```
 
 2. Point your client at:
 
    ```text
-   http://openrouter-image-proxy:8080/v1
+   http://openrouter-media-proxy:8080/v1
    ```
 
 3. Use an OpenRouter API key in the normal OpenAI `Authorization: Bearer ...`
@@ -124,7 +124,7 @@ Bare `/images/*` and `/audio/*` routes are also available for convenience.
 ### Generate an image
 
 ```bash
-curl -s http://openrouter-image-proxy:8080/v1/images/generations \
+curl -s http://openrouter-media-proxy:8080/v1/images/generations \
   -H "Authorization: Bearer sk-or-v1-YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -139,7 +139,7 @@ curl -s http://openrouter-image-proxy:8080/v1/images/generations \
 ### Transcribe audio
 
 ```bash
-curl -s http://openrouter-image-proxy:8080/v1/audio/transcriptions \
+curl -s http://openrouter-media-proxy:8080/v1/audio/transcriptions \
   -H "Authorization: Bearer sk-or-v1-YOUR_KEY" \
   -F "file=@sample.wav" \
   -F "model=google/gemini-2.5-flash" \
@@ -149,7 +149,7 @@ curl -s http://openrouter-image-proxy:8080/v1/audio/transcriptions \
 ### Translate audio into English
 
 ```bash
-curl -s http://openrouter-image-proxy:8080/v1/audio/translations \
+curl -s http://openrouter-media-proxy:8080/v1/audio/translations \
   -H "Authorization: Bearer sk-or-v1-YOUR_KEY" \
   -F "file=@sample.mp3" \
   -F "model=google/gemini-2.5-flash" \
@@ -159,7 +159,7 @@ curl -s http://openrouter-image-proxy:8080/v1/audio/translations \
 ### Generate speech
 
 ```bash
-curl -s http://openrouter-image-proxy:8080/v1/audio/speech \
+curl -s http://openrouter-media-proxy:8080/v1/audio/speech \
   -H "Authorization: Bearer sk-or-v1-YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{

@@ -1,5 +1,5 @@
 """
-openrouter_image_proxy.py
+openrouter_media_proxy.py
 
 A minimal FastAPI proxy that translates OpenAI-compatible image and audio
 requests into OpenRouter's chat/completions API format.
@@ -37,7 +37,7 @@ logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
-logger = logging.getLogger("openrouter_proxy")
+logger = logging.getLogger("openrouter_media_proxy")
 
 # ---- Constants / mappings --------------------------------------------------
 
