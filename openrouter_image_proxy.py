@@ -261,9 +261,11 @@ async def edits(request: Request):
         quality = str(form.get("quality") or "") or None
         background = str(form.get("background") or "") or None
 
+        EXPECTED_FILE_FIELDS = {"image", "image[]", "images", "images[]", "mask", "mask[]"}
+
         image_urls: list[str] = []
         for key, value in form.multi_items():
-            if hasattr(value, "read"):
+            if hasattr(value, "read") and key in EXPECTED_FILE_FIELDS:
                 raw = await value.read()
                 if raw:
                     ct = getattr(value, "content_type", None) or "image/png"
