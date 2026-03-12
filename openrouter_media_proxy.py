@@ -705,22 +705,27 @@ async def _call_audio_input_endpoint(request: Request, task: str) -> Response:
         )
 
     form = await request.form()
-    upload = form.get("file")
-    if upload is None or not hasattr(upload, "read"):
-        return error_response(400, "A multipart file field named 'file' is required.")
+    try:
+        upload = form.get("file")
+        if upload is None or not hasattr(upload, "read"):
+            return error_response(400, "A multipart file field named 'file' is required.")
 
-    model = str(form.get("model") or "").strip()
-    if not model:
-        return error_response(400, "A model is required.")
+        model = str(form.get("model") or "").strip()
+        if not model:
+            return error_response(400, "A model is required.")
 
-    raw = await upload.read()
-    if not raw:
-        return error_response(400, "The uploaded audio file is empty.")
+        raw = await upload.read()
+        if not raw:
+            return error_response(400, "The uploaded audio file is empty.")
 
-    response_format = str(form.get("response_format") or "json").strip().lower()
-    prompt = str(form.get("prompt") or "").strip() or None
-    language = str(form.get("language") or "").strip() or None
-    audio_format = _guess_audio_format(upload)
+        response_format = str(form.get("response_format") or "json").strip().lower()
+        prompt = str(form.get("prompt") or "").strip() or None
+        language = str(form.get("language") or "").strip() or None
+        audio_format = _guess_audio_format(upload)
+        temperature = form.get("temperature")
+    finally:
+        await form.close()
+
     b64_audio = base64.b64encode(raw).decode()
 
     instruction = _build_audio_instruction(task, response_format, prompt, language)
@@ -743,7 +748,6 @@ async def _call_audio_input_endpoint(request: Request, task: str) -> Response:
         ],
     }
 
-    temperature = form.get("temperature")
     if temperature not in (None, ""):
         or_body["temperature"] = _as_float(temperature, 0.0)
 
@@ -843,23 +847,26 @@ async def edits(request: Request) -> Response:
 
     if "multipart" in content_type:
         form = await request.form()
-        prompt = str(form.get("prompt") or "")
-        model = str(form.get("model") or "")
-        n = max(1, min(int(form.get("n") or 1), 10))
-        size = str(form.get("size") or "") or None
-        quality = str(form.get("quality") or "") or None
-        background = str(form.get("background") or "") or None
+        try:
+            prompt = str(form.get("prompt") or "")
+            model = str(form.get("model") or "")
+            n = max(1, min(int(form.get("n") or 1), 10))
+            size = str(form.get("size") or "") or None
+            quality = str(form.get("quality") or "") or None
+            background = str(form.get("background") or "") or None
 
-        expected_file_fields = {"image", "image[]", "images", "images[]", "mask", "mask[]"}
+            expected_file_fields = {"image", "image[]", "images", "images[]", "mask", "mask[]"}
 
-        image_urls: list[str] = []
-        for key, value in form.multi_items():
-            if hasattr(value, "read") and key in expected_file_fields:
-                raw = await value.read()
-                if raw:
-                    ct = getattr(value, "content_type", None) or "image/png"
-                    b64 = base64.b64encode(raw).decode()
-                    image_urls.append(f"data:{ct};base64,{b64}")
+            image_urls: list[str] = []
+            for key, value in form.multi_items():
+                if hasattr(value, "read") and key in expected_file_fields:
+                    raw = await value.read()
+                    if raw:
+                        ct = getattr(value, "content_type", None) or "image/png"
+                        b64 = base64.b64encode(raw).decode()
+                        image_urls.append(f"data:{ct};base64,{b64}")
+        finally:
+            await form.close()
     else:
         body = await request.json()
         prompt = body.get("prompt", "")
